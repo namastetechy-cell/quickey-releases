@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quickey – the two-second file converter for Windows</title>
+<meta name="description" content="Drag a file, tap a key, drop it on a format. Quickey converts images, PDF, Word and Excel, compresses photos to any KB and makes passport photos, all offline on your Windows PC.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Quickey – the two-second file converter for Windows">
+<meta property="og:description" content="Convert, compress and crop files right inside File Explorer. Works offline.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a calm, airy product page in Quickey's own colours. A live, draggable demo opens the page;
+   then numbers, the three wheels, tool cards with small illustrations, formats, privacy, pricing. */
+:root {
+  --bg: #f3f3f7;
+  --surface: #ffffff;
+  --ink: #17161f;
+  --muted: #6a6780;
+  --line: #e3e2ec;
+  --accent: #5b5bef;
+  --accent-soft: #ececfe;
+  --on-accent: #ffffff;
+  --wheel: #ffffff;
+  --wheel-line: #dddcea;
+  --good: #158a52;
+  --bad: #d4532f;
+  --shadow: 0 24px 60px -30px rgba(40, 36, 100, .35);
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0f16; --surface: #191924; --ink: #f1f0f8; --muted: #a09db8; --line: #2b2a3b;
+    --accent: #8a8cff; --accent-soft: #25254a; --on-accent: #0f0f16;
+    --wheel: #22222f; --wheel-line: #34334a; --good: #50d495; --bad: #ff8e6e;
+    --shadow: 0 24px 60px -30px rgba(0, 0, 0, .8);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f0f16; --surface: #191924; --ink: #f1f0f8; --muted: #a09db8; --line: #2b2a3b;
+  --accent: #8a8cff; --accent-soft: #25254a; --on-accent: #0f0f16;
+  --wheel: #22222f; --wheel-line: #34334a; --good: #50d495; --bad: #ff8e6e;
+  --shadow: 0 24px 60px -30px rgba(0, 0, 0, .8);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 17px/1.6 var(--body); }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.04; letter-spacing: -0.025em; text-wrap: balance; }
+h1 { font-size: clamp(2.7rem, 7vw, 5.2rem); font-weight: 800; }
+h2 { font-size: clamp(2rem, 4.4vw, 3.1rem); font-weight: 800; }
+h3 { font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; }
+p { margin: 0; }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 56ch; }
+.center { text-align: center; margin-inline: auto; }
+.mono { font-family: var(--mono); }
+.kbd { display: inline-block; font: 600 .8rem/1 var(--mono); padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); border-bottom-width: 3px; background: var(--surface); color: var(--ink); }
+
+header.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(12px); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 31; background: var(--bg); }
+.nav .wrap { display: flex; align-items: center; gap: 22px; padding-block: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 800 1.2rem/1 var(--display); text-decoration: none; }
+.brand svg { width: 30px; height: 30px; }
+.nav nav { display: flex; gap: 22px; margin-left: auto; font-size: .95rem; color: var(--muted); }
+.nav nav a { text-decoration: none; }
+.nav nav a:hover { color: var(--ink); }
+@media (max-width: 760px) { .nav nav { display: none; } .nav .btn { margin-left: auto; } }
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 600 .98rem/1 var(--body); padding: 13px 20px; border-radius: 999px; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
+.btn-primary { background: var(--ink); color: var(--bg); }
+.btn-primary:hover { background: var(--accent); color: var(--on-accent); }
+.btn-ghost { border-color: var(--line); background: var(--surface); }
+@media (max-width: 420px) { .nav .btn { padding: 10px 14px; font-size: .9rem; } }
+
+section { padding-block: clamp(60px, 9vw, 110px); }
+.head { display: grid; gap: 14px; margin-bottom: 44px; }
+
+/* Hero */
+.hero { padding-block: clamp(40px, 7vw, 80px) 40px; }
+.hero .copy { display: grid; gap: 20px; justify-items: center; text-align: center; }
+.hero .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.stage {
+  position: relative; margin-top: 44px; height: 420px; border-radius: 24px; overflow: hidden;
+  background:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--ink) 12%, transparent) 1px, transparent 0) 0 0 / 22px 22px,
+    linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 70%, var(--bg)));
+  border: 1px solid var(--line); box-shadow: var(--shadow); touch-action: none; user-select: none;
+}
+.stage-hint { position: absolute; top: 18px; left: 0; right: 0; text-align: center; font-size: .95rem; color: var(--muted); pointer-events: none; padding-inline: 16px; }
+.stage-hint b { color: var(--ink); }
+.file {
+  position: absolute; display: grid; justify-items: center; gap: 6px; width: 150px; padding: 14px 10px 12px; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--line); box-shadow: 0 10px 30px -18px rgba(30, 28, 80, .5); cursor: grab; touch-action: none;
+}
+.file:active { cursor: grabbing; }
+.file .thumb { width: 64px; height: 76px; border-radius: 8px; background: linear-gradient(160deg, #b9c6ff, #6c6ff0 60%, #3f3fb6); position: relative; overflow: hidden; }
+.file .thumb::after { content: ""; position: absolute; left: 50%; top: 30%; width: 26px; height: 26px; margin-left: -13px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 30px 0 10px rgba(255,255,255,.85); }
+.file .name { font: 500 .75rem/1.2 var(--mono); text-align: center; word-break: break-all; }
+.file .size { font: 600 .75rem/1 var(--mono); color: var(--bad); }
+.file.done .size { color: var(--good); }
+.file.dragging { box-shadow: 0 24px 50px -16px rgba(60, 60, 200, .55); border-color: var(--accent); z-index: 5; transition: transform .12s ease-out; }
+/* While the wheel is open the dragged file shrinks, so it doesn't hide the wedges under it. */
+.stage.wheel-open .file.dragging { transform: scale(.5); opacity: .92; }
+
+/* Desktop-style file icons: a page with a folded corner and a coloured format label. */
+.file { width: 112px; padding: 8px 6px; gap: 5px; background: transparent; border: 1px solid transparent; box-shadow: none; border-radius: 12px; }
+.file:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.file.dragging { background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); box-shadow: none; }
+.file .name { max-width: 100px; font-size: .68rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.file .size { color: var(--muted); font-size: .68rem; }
+.file.result { animation: drop-in .28s ease-out; }
+.file.selected { background: color-mix(in srgb, var(--accent) 7%, transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.file.result .size { color: var(--good); }
+@keyframes drop-in { from { transform: scale(.55); opacity: 0; } to { transform: none; opacity: 1; } }
+.ficon { position: relative; width: 52px; height: 64px; filter: drop-shadow(0 5px 9px rgba(30, 28, 80, .22)); }
+.ficon::before { content: ""; position: absolute; inset: 0; background: var(--surface); clip-path: polygon(0 0, 68% 0, 100% 24%, 100% 100%, 0 100%); border-radius: 4px; }
+.ficon .fold { position: absolute; right: 0; top: 0; width: 32%; height: 24%; background: var(--line); clip-path: polygon(0 0, 0 100%, 100% 100%); }
+.ficon .pic { position: absolute; left: 7px; right: 7px; top: 15px; bottom: 19px; border-radius: 3px; background: linear-gradient(160deg, #b9c6ff, #6c6ff0 60%, #3f3fb6); overflow: hidden; }
+.ficon .pic::after { content: ""; position: absolute; left: 50%; top: 22%; width: 34%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: rgba(255, 255, 255, .85); box-shadow: 0 110% 0 45% rgba(255, 255, 255, .85); }
+.ficon .lines { position: absolute; left: 9px; right: 9px; top: 17px; bottom: 21px; background: repeating-linear-gradient(var(--line) 0 2px, transparent 2px 6px); }
+.ficon .fmt { position: absolute; left: 4px; right: 4px; bottom: 5px; padding: 3px 0; border-radius: 3px; text-align: center; font: 700 .56rem/1 var(--mono); letter-spacing: .04em; color: #fff; background: var(--fmt, var(--accent)); }
+.pop { position: absolute; width: 270px; height: 270px; margin: -135px 0 0 -135px; pointer-events: none; z-index: 4; transform: scale(.85); opacity: 0; transition: transform .14s ease-out, opacity .14s; }
+.pop.open { transform: scale(1); opacity: 1; }
+.toast { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: calc(100% - 32px); background: var(--ink); color: var(--bg); font-size: .9rem; padding: 10px 16px; border-radius: 999px; opacity: 0; transition: opacity .2s; pointer-events: none; text-align: center; }
+.toast.show { opacity: 1; }
+.tapkeys { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 16px; color: var(--muted); font-size: .9rem; }
+.tapkeys button { cursor: pointer; }
+.tapkeys button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+/* Wheels (shared) */
+.wedge { fill: var(--wheel); stroke: var(--wheel-line); stroke-width: 1; transition: fill .18s; }
+.wedge.on { fill: var(--accent); stroke: var(--accent); }
+.wlabel { fill: var(--ink); font: 600 11.5px var(--body); pointer-events: none; }
+.wlabel.on { fill: var(--on-accent); }
+.whub { fill: var(--surface); stroke: var(--wheel-line); }
+.whub-title { fill: var(--ink); font: 800 14px var(--display); }
+.whub-key { fill: var(--muted); font: 600 9.5px var(--mono); }
+svg.wheel { filter: drop-shadow(0 14px 24px rgba(40, 36, 110, .18)); overflow: visible; }
+
+/* Stats + chips */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.stat { display: grid; gap: 4px; padding: 26px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); }
+.stat strong { font: 800 clamp(2.6rem, 6vw, 3.8rem)/1 var(--display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); }
+@media (max-width: 640px) { .stats { grid-template-columns: minmax(0, 1fr); } }
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: .92rem; }
+.chip i { font-style: normal; font: 600 .66rem/1 var(--mono); color: var(--accent); background: var(--accent-soft); padding: 4px 6px; border-radius: 5px; }
+
+/* Three wheels */
+.wheels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .wheels { grid-template-columns: minmax(0, 1fr); } }
+.wheel-card { display: grid; justify-items: center; gap: 14px; padding: 30px 20px 24px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); }
+.wheel-card svg { width: 240px; height: 240px; max-width: 100%; }
+.wheel-card .caption { color: var(--muted); font-size: .95rem; min-height: 1.6em; }
+.wheel-card h3 { display: flex; align-items: center; gap: 10px; }
+
+/* Tool cards */
+.tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .tools { grid-template-columns: minmax(0, 1fr); } }
+.tool { display: grid; grid-template-rows: 170px auto; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
+.tool .art { display: grid; place-items: center; background: var(--bg); border-bottom: 1px solid var(--line); padding: 16px; min-width: 0; }
+.tool .text { display: grid; gap: 6px; padding: 20px 22px 24px; align-content: start; }
+.tool .text p { color: var(--muted); font-size: .95rem; }
+.mini { font: 500 .72rem/1.3 var(--mono); color: var(--muted); }
+.art-row { display: flex; align-items: center; gap: 14px; }
+.ph { width: 70px; height: 84px; border-radius: 10px; background: linear-gradient(160deg, #b9c6ff, #6c6ff0 60%, #3f3fb6); position: relative; overflow: hidden; }
+.ph.small { width: 48px; height: 58px; }
+.ph::after { content: ""; position: absolute; left: 50%; top: 28%; width: 34%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 120% 0 40% rgba(255,255,255,.85); }
+.tagline { display: grid; gap: 4px; justify-items: center; }
+.size-bad { font: 600 .74rem/1 var(--mono); color: var(--bad); }
+.size-good { font: 600 .74rem/1 var(--mono); color: var(--good); }
+.arrow { color: var(--muted); font-size: 1.3rem; }
+.passport { position: relative; padding: 10px; border: 2px dashed var(--accent); border-radius: 12px; }
+.badge { position: absolute; right: -14px; bottom: -12px; font: 600 .7rem/1 var(--mono); background: var(--good); color: var(--surface); padding: 5px 7px; border-radius: 6px; }
+.crop-frame { position: relative; width: 150px; height: 100px; border-radius: 10px; background: linear-gradient(160deg, #ffd2b8, #f08a6c 55%, #8a3f9e); overflow: hidden; }
+.crop-frame::before { content: ""; position: absolute; left: 30%; top: 8%; width: 40%; height: 84%; border: 2px solid #fff; box-shadow: 0 0 0 999px rgba(0,0,0,.35); border-radius: 3px; }
+.ratios { display: flex; gap: 6px; margin-top: 10px; justify-content: center; flex-wrap: wrap; }
+.ratios span { font: 600 .66rem/1 var(--mono); padding: 5px 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); }
+.ratios span.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.sliders { display: grid; gap: 10px; width: 180px; }
+.slider { display: grid; gap: 4px; }
+.slider .bar { height: 6px; border-radius: 3px; background: var(--line); position: relative; }
+.slider .bar::after { content: ""; position: absolute; top: -5px; left: var(--x); width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.meta { width: 200px; display: grid; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; font-size: .78rem; }
+.meta div { display: flex; justify-content: space-between; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--line); }
+.meta div:last-child { border-bottom: 0; }
+.meta s { color: var(--muted); }
+.doc { width: 62px; height: 78px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; font: 700 .7rem/1 var(--mono); position: relative; }
+.doc.pdf { color: var(--bad); }
+.doc.word { color: var(--accent); }
+.doc .grid { position: absolute; inset: 32px 9px 9px; background: linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 100% 8px, linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 15px 100%; }
+.sheets { display: grid; gap: 6px; width: 180px; font-size: .8rem; }
+.sheets label { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 9px; background: var(--surface); border: 1px solid var(--line); }
+.sheets label.on { border-color: var(--accent); }
+.dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); flex: none; }
+.on .dot { border-color: var(--accent); background: radial-gradient(var(--accent) 45%, transparent 50%); }
+.stack { position: relative; width: 120px; height: 90px; }
+.stack .doc { position: absolute; }
+
+/* Actions */
+.actions-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+@media (max-width: 860px) { .actions-split { grid-template-columns: minmax(0, 1fr); } }
+.action-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.action-list div { padding: 14px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); font-weight: 600; }
+.action-list small { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; }
+
+/* Formats */
+.formats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 860px) { .formats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .formats { grid-template-columns: minmax(0, 1fr); } }
+.fmt { display: grid; gap: 10px; align-content: start; padding: 22px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); }
+.fmt .list { font: 500 .78rem/1.8 var(--mono); letter-spacing: .04em; color: var(--muted); }
+.fmt small { color: var(--muted); font-size: .82rem; }
+
+/* Privacy */
+.versus { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 760px) { .versus { grid-template-columns: minmax(0, 1fr); } }
+.side { display: grid; gap: 14px; padding: 30px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); }
+.side.ours { border: 2px solid var(--accent); }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 500 .82rem/1 var(--mono); }
+.flow span { padding: 8px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); }
+.side ul { margin: 0; padding-left: 18px; color: var(--muted); display: grid; gap: 4px; }
+
+/* Pricing */
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; max-width: 820px; margin-inline: auto; }
+@media (max-width: 700px) { .plans { grid-template-columns: minmax(0, 1fr); } }
+.plan { display: grid; gap: 16px; align-content: start; padding: 30px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); }
+.plan.pro { border: 2px solid var(--accent); }
+.price { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.price .amount { font: 800 2.7rem/1 var(--display); }
+.price s, .price small { color: var(--muted); }
+.plan ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.plan li::before { content: "✓"; color: var(--good); font-weight: 700; margin-right: 8px; }
+.tag { justify-self: start; font: 600 .72rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; padding: 6px 9px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+
+/* Final CTA + keyboard */
+.final { display: grid; justify-items: center; gap: 22px; text-align: center; }
+.final ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; color: var(--muted); }
+.final li::before { content: "✓"; color: var(--good); font-weight: 700; margin-right: 6px; }
+.keyboard { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 760px; margin: 44px auto 0; }
+@media (max-width: 600px) { .keyboard { grid-template-columns: minmax(0, 1fr); } }
+.keymap { display: grid; justify-items: center; gap: 10px; padding: 22px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); }
+.keymap .kbd { font-size: 1rem; padding: 12px 18px; }
+.keymap span { color: var(--muted); font-size: .92rem; }
+.howto { max-width: 70ch; margin: 28px auto 0; color: var(--muted); font-size: .95rem; text-align: center; }
+
+footer { padding-block: 40px 52px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+footer .foot-links { display: flex; flex-wrap: wrap; gap: 18px; }
+footer .foot-links a { text-decoration: none; }
+footer .foot-links a:hover { color: var(--ink); }
+footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Quickey home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M16 5.5a10.5 10.5 0 0 1 9.1 5.25l-4.6 2.65A5.2 5.2 0 0 0 16 10.8Z" fill="var(--on-accent)"/><path d="M25.6 12.1a10.5 10.5 0 0 1-4.5 12.6l-2.6-4.6a5.2 5.2 0 0 0 2.4-5.4Z" fill="var(--on-accent)" opacity=".75"/><path d="M19.6 25.5A10.5 10.5 0 0 1 6.4 20.4l4.6-2.6a5.2 5.2 0 0 0 6.1 3.2Z" fill="var(--on-accent)" opacity=".5"/><circle cx="16" cy="16" r="3" fill="var(--on-accent)"/></svg>
+      Quickey
+    </a>
+    <nav aria-label="Sections"><a href="#features">Features</a><a href="#portal">Portal photos</a><a href="#formats">Formats</a><a href="#pricing">Pricing</a></nav>
+    <a class="btn btn-primary" href="https://github.com/namastetechy-cell/quickey-releases/releases/latest/download/Quickey-win-Setup.exe">Download free</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="copy">
+        <h1>The two-second file converter for Windows.</h1>
+        <p class="lede">Drag a file, tap a key, drop it on what you want. Quickey converts, compresses and crops right inside File Explorer, and never uploads a thing.</p>
+        <div class="ctas"><a class="btn btn-primary" href="https://github.com/namastetechy-cell/quickey-releases/releases/latest/download/Quickey-win-Setup.exe">Download for Windows</a><a class="btn btn-ghost" href="#features">See what it does</a></div>
+      </div>
+
+      <div class="stage" id="stage" aria-label="Try Quickey: drag the photo, then tap Shift, Ctrl or Alt">
+        <p class="stage-hint" id="hint"><b>Drag this file</b>, then tap <span class="kbd">Shift</span> <span class="kbd">Ctrl</span> or <span class="kbd">Alt</span> while you hold it.</p>
+        <div class="file" id="file" tabindex="0" role="button" aria-label="passport_photo.jpg, 4.2 MB. Drag it, or use the buttons below.">
+          <div class="ficon" aria-hidden="true" style="--fmt:#5b5bef"><span class="fold"></span><span class="pic"></span><span class="fmt">JPG</span></div>
+          <div class="name" id="file-name">passport_photo.jpg</div>
+          <div class="size" id="file-size">4.2 MB</div>
+        </div>
+        <svg class="wheel pop" id="pop" viewBox="0 0 270 270" aria-hidden="true"></svg>
+        <div class="toast" id="toast" role="status"></div>
+      </div>
+      <div class="tapkeys" role="group" aria-label="Open a wheel without dragging">
+        <span>No keyboard? Pick a file, then tap:</span>
+        <button class="kbd" type="button" data-cat="convert" aria-pressed="false">Shift</button>
+        <button class="kbd" type="button" data-cat="tools" aria-pressed="false">Ctrl</button>
+        <button class="kbd" type="button" data-cat="actions" aria-pressed="false">Alt</button>
+        <button class="kbd" type="button" id="reset">Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:20px">
+    <div class="wrap">
+      <div class="stats">
+        <div class="stat"><strong>25</strong><span>conversions between images, PDF, Word, Excel and PowerPoint</span></div>
+        <div class="stat"><strong>13</strong><span>tools: compress, portal photo, crop, edit, merge and more</span></div>
+        <div class="stat"><strong>7</strong><span>file actions, always free</span></div>
+      </div>
+      <div class="chips" aria-label="File types">
+        <span class="chip"><i>IMG</i>Images</span><span class="chip"><i>HEIC</i>iPhone photos</span><span class="chip"><i>PDF</i>PDF</span>
+        <span class="chip"><i>DOC</i>Word</span><span class="chip"><i>XLS</i>Excel</span><span class="chip"><i>PPT</i>PowerPoint</span><span class="chip"><i>CSV</i>CSV</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" style="padding-top:20px">
+    <div class="wrap">
+      <div class="head center" style="text-align:center;justify-items:center">
+        <h2>One gesture. Three wheels.</h2>
+        <p class="lede">Each key opens its own wheel, showing only what fits the files you're dragging. Tap another key mid-drag to switch. Hover a wheel to try it.</p>
+      </div>
+      <div class="wheels">
+        <article class="wheel-card"><svg class="wheel" data-wheel="convert" viewBox="0 0 270 270" role="img" aria-label="Convert wheel"></svg><h3><span class="kbd">Shift</span> Convert formats</h3><p class="caption" data-caption="convert">Convert to WebP</p></article>
+        <article class="wheel-card"><svg class="wheel" data-wheel="tools" viewBox="0 0 270 270" role="img" aria-label="Tools wheel"></svg><h3><span class="kbd">Ctrl</span> File tools</h3><p class="caption" data-caption="tools">Compress to a size</p></article>
+        <article class="wheel-card"><svg class="wheel" data-wheel="actions" viewBox="0 0 270 270" role="img" aria-label="Actions wheel"></svg><h3><span class="kbd">Alt</span> File actions</h3><p class="caption" data-caption="actions">Copy the file path</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="portal" style="padding-top:0">
+    <div class="wrap">
+      <div class="head">
+        <h2>Tools that finish the job.</h2>
+        <p class="lede">Every tool saves a new file next to the original, so nothing is ever overwritten.</p>
+      </div>
+      <div class="tools">
+        <article class="tool">
+          <div class="art"><div class="passport"><div class="ph"></div><span class="badge">46 KB</span></div></div>
+          <div class="text"><h3>Portal photos</h3><p>Passport 3.5 × 4.5 cm, exam photo or signature: exact size, DPI and KB limit in one step. Or enter any portal's own rules.</p></div>
+        </article>
+        <article class="tool">
+          <div class="art"><div class="art-row"><div class="tagline"><div class="ph"></div><span class="size-bad">4.2 MB</span></div><span class="arrow">→</span><div class="tagline"><div class="ph small"></div><span class="size-good">48 KB</span></div></div></div>
+          <div class="text"><h3>Compress to any size</h3><p>Pick a target like 50 KB, a percentage or a preset. Resize and change format while you're at it, with a live estimate.</p></div>
+        </article>
+        <article class="tool">
+          <div class="art"><div><div class="crop-frame"></div><div class="ratios"><span>Free</span><span>1:1</span><span class="on">4:5</span><span>9:16</span><span>16:9</span></div></div></div>
+          <div class="text"><h3>Crop to any shape</h3><p>Freeform or locked ratios for posts, stories and banners. Drag the box, see the exact pixel size.</p></div>
+        </article>
+        <article class="tool">
+          <div class="art"><div class="sliders"><div class="slider"><span class="mini">Exposure</span><div class="bar" style="--x:62%"></div></div><div class="slider"><span class="mini">Warmth</span><div class="bar" style="--x:40%"></div></div><div class="slider"><span class="mini">Sharpness</span><div class="bar" style="--x:75%"></div></div></div></div>
+          <div class="text"><h3>Edit photos</h3><p>Exposure, contrast, colour, sharpness, vignette and filters, with a live preview. One edit can apply to a whole batch.</p></div>
+        </article>
+        <article class="tool">
+          <div class="art"><div class="meta"><div><span>Location</span><s>Removed</s></div><div><span>Camera</span><span>Pixel 8</span></div><div><span>Author</span><span>Asha</span></div></div></div>
+          <div class="text"><h3>Edit metadata</h3><p>See and change camera, date, author and location, or strip it all before you share. JPEGs are edited without losing quality.</p></div>
+        </article>
+        <article class="tool">
+          <div class="art"><div class="art-row"><div class="doc pdf">PDF</div><span class="arrow">→</span><div class="doc word">DOCX<div class="grid"></div></div></div></div>
+          <div class="text"><h3>PDF to Word</h3><p>Editable text, headings and images, with tables rebuilt from the PDF's grid lines. Scans are read with OCR.</p></div>
+        </article>
+        <article class="tool">
+          <div class="art"><div class="sheets"><label class="on"><span class="dot"></span>Current sheet: GST</label><label><span class="dot"></span>All 3 sheets</label><label><span class="dot"></span>Choose sheets…</label></div></div>
+          <div class="text"><h3>Excel to PDF, Word or CSV</h3><p>Converts just the sheet you were working on, or the ones you choose. Word tables keep Excel's number formats.</p></div>
+        </article>
+        <article class="tool">
+          <div class="art"><div class="stack"><div class="doc pdf" style="left:0;top:8px">PDF</div><div class="doc pdf" style="left:28px;top:4px">PDF</div><div class="doc pdf" style="left:56px;top:0">PDF</div></div></div>
+          <div class="text"><h3>Merge, split and shrink PDFs</h3><p>Join certificates into one file, split pages apart, rotate, or compress a PDF to fit an upload limit.</p></div>
+        </article>
+        <article class="tool">
+          <div class="art"><div class="art-row"><span class="chip"><i>HEIC</i>IMG_2041</span><span class="arrow">→</span><span class="chip"><i>JPG</i>IMG_2041</span></div></div>
+          <div class="text"><h3>iPhone photos to JPG</h3><p>Open HEIC photos anywhere: convert to JPG, PNG, WebP or PDF in a batch, keeping the right rotation.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" style="padding-top:0">
+    <div class="wrap actions-split">
+      <div class="head" style="margin-bottom:0">
+        <h2>Everyday file chores on <span class="kbd" style="font-size:.5em;vertical-align:middle">Alt</span></h2>
+        <p class="lede">Copy a path for an email, move a file into the right folder, or open a terminal right there. Actions work on folders too and never count against the free limit.</p>
+      </div>
+      <div class="action-list">
+        <div>Copy path<small>Paste it anywhere</small></div>
+        <div>Copy image<small>Straight to WhatsApp or Slides</small></div>
+        <div>Copy to… / Move to…<small>With Windows' own progress</small></div>
+        <div>Terminal<small>Opened in that folder</small></div>
+        <div>Share<small>Nearby Sharing, Mail, Teams</small></div>
+        <div>Copy name<small>Just the file name</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="formats" style="padding-top:0">
+    <div class="wrap">
+      <div class="head"><h2>Formats</h2><p class="lede">Images and PDFs need nothing else installed. Word, Excel and PowerPoint to PDF use the Microsoft Office already on your PC.</p></div>
+      <div class="formats">
+        <article class="fmt"><h3>Images</h3><p class="list">PNG · JPG · WEBP · AVIF · GIF · BMP · TIFF · ICO · PDF</p><small>Also opens HEIC, PSD, SVG and TGA.</small></article>
+        <article class="fmt"><h3>PDF</h3><p class="list">PNG · JPG · TXT · DOCX</p><small>Plus merge, split, rotate and compress. OCR for scans.</small></article>
+        <article class="fmt"><h3>Word</h3><p class="list">PDF · DOCX · TXT · RTF · HTML</p><small>From DOC, DOCX, RTF and ODT. Needs Office.</small></article>
+        <article class="fmt"><h3>Excel</h3><p class="list">PDF · DOCX · CSV · XLSX</p><small>Word and CSV work without Office.</small></article>
+        <article class="fmt"><h3>PowerPoint</h3><p class="list">PDF · PPTX · PNG SLIDES</p><small>From PPT, PPTX and ODP. Needs Office.</small></article>
+        <article class="fmt"><h3>CSV</h3><p class="list">DOCX</p><small>Turn a CSV into a formatted Word table.</small></article>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="head center" style="text-align:center;justify-items:center"><h2>Your files stay yours.</h2><p class="lede">Marksheets, ID cards, salary slips and client files shouldn't go to a stranger's server just to change their format.</p></div>
+      <div class="versus">
+        <article class="side">
+          <h3>Online converters</h3>
+          <div class="flow"><span>Upload</span>→<span>Wait</span>→<span>Download</span>→<span>Hope it's deleted</span></div>
+          <ul><li>Your documents sit on someone else's server</li><li>Needs internet, slow on big files</li><li>Ads, daily limits and sign-ups</li></ul>
+        </article>
+        <article class="side ours">
+          <h3>Quickey</h3>
+          <div class="flow"><span>Drag</span>→<span>Tap a key</span>→<span>Done</span></div>
+          <ul><li>Everything runs on your PC</li><li>Works offline, even with Wi-Fi off</li><li>Originals are never changed</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" style="padding-top:0">
+    <div class="wrap">
+      <div class="head center" style="text-align:center;justify-items:center"><h2>Free to start. Pay once.</h2></div>
+      <div class="plans">
+        <article class="plan"><h3>Free</h3><div class="price"><span class="amount">$0</span><small>forever</small></div><ul><li>10 conversions a day</li><li>Every wheel and every tool</li><li>Unlimited file actions</li></ul><a class="btn btn-ghost" href="https://github.com/namastetechy-cell/quickey-releases/releases/latest/download/Quickey-win-Setup.exe" style="justify-content:center">Download free</a></article>
+        <article class="plan pro"><span class="tag">Launch price</span><h3>Quickey Pro</h3><div class="price"><span class="amount">$9</span><small>one-time, about ₹780</small></div><ul><li>Unlimited conversions</li><li>Use on 2 PCs</li><li>All version 1 updates</li><li>No subscription</li></ul><a class="btn btn-primary" href="https://getquickey.lemonsqueezy.com/checkout/buy/3206e744-ac42-4584-bb6e-55e3a82de228" target="_blank" rel="noopener" style="justify-content:center">Buy Quickey Pro</a><small style="color:var(--muted);font-size:.85rem">Secure checkout by Lemon Squeezy. Your license key arrives by email instantly.</small></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="get" style="padding-top:0">
+    <div class="wrap final">
+      <h2>Get Quickey</h2>
+      <ul><li>Works offline</li><li>Portal-ready photos</li><li>PDF, Word &amp; Excel</li><li>Pay once</li></ul>
+      <a class="btn btn-primary" href="https://github.com/namastetechy-cell/quickey-releases/releases/latest/download/Quickey-win-Setup.exe" style="font-size:1.05rem;padding:16px 26px">Download for Windows</a>
+      <p class="lede" style="font-size:.95rem">Free download for Windows 10 (version 2004 or later) and Windows 11, 64-bit. Upgrade to Pro inside the app any time.<br>Windows may show "Windows protected your PC" the first time: click <b>More info</b>, then <b>Run anyway</b>.</p>
+
+      <div class="keyboard">
+        <div class="keymap"><span class="kbd">Shift</span><b>Convert</b><span>Change the format</span></div>
+        <div class="keymap"><span class="kbd">Ctrl</span><b>Tools</b><span>Compress, crop, edit</span></div>
+        <div class="keymap"><span class="kbd">Alt</span><b>Actions</b><span>Copy, move, share</span></div>
+      </div>
+      <p class="howto">Start dragging one or more files in File Explorer or on the desktop, then tap a key. The wheel stays open until you drop or press Esc, and you can change the keys in Settings. Prefer clicking? Right-click files and choose Convert with Quickey. The demo on this page is a simulation.</p>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span class="brand" style="font-size:1rem">Quickey</span><nav class="foot-links"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="refund.html">Refunds</a><a href="https://github.com/namastetechy-cell/quickey-releases/releases">All versions</a></nav><span>© 2026 Quickey · Files stay on your PC</span></div></footer>
+
+<script>
+const WHEELS = {
+  convert: { title: "Convert", key: "Shift", items: [
+    ["PNG", "Convert to PNG", "passport_photo.png", "3.1 MB"], ["WebP", "Convert to WebP", "passport_photo.webp", "420 KB"],
+    ["AVIF", "Convert to AVIF", "passport_photo.avif", "260 KB"], ["PDF", "Convert to PDF", "passport_photo.pdf", "380 KB"],
+    ["GIF", "Convert to GIF", "passport_photo.gif", "1.9 MB"], ["ICO", "Make an icon", "passport_photo.ico", "96 KB"]] },
+  tools: { title: "Tools", key: "Ctrl", items: [
+    ["Compress", "Compress to a size", "passport_photo-compressed.jpg", "48 KB"], ["Portal", "Passport photo, 3.5 × 4.5 cm", "passport_photo-passport.jpg", "46 KB"],
+    ["Crop", "Crop to 4:5", "passport_photo-cropped.jpg", "2.9 MB"], ["Edit", "Brighten and sharpen", "passport_photo-edited.jpg", "4.0 MB"],
+    ["Metadata", "Remove the location", "passport_photo-edited.jpg", "4.1 MB"], ["Rotate", "Rotate right", "passport_photo-rotated.jpg", "4.2 MB"]] },
+  actions: { title: "Actions", key: "Alt", items: [
+    ["Copy path", "Copy the file path", null, "Copied C:\\Users\\You\\Desktop\\passport_photo.jpg"], ["Copy name", "Copy the file name", null, "Copied passport_photo.jpg"],
+    ["Copy to…", "Copy to another folder", null, "Copied to Documents"], ["Move to…", "Move to another folder", null, "Moved to Documents"],
+    ["Terminal", "Open a terminal here", null, "Opened Terminal in Desktop"], ["Share", "Share nearby or by mail", null, "Opened the Windows share sheet"]] },
+};
+
+const NS = "http://www.w3.org/2000/svg";
+const C = 135, R1 = 48, R2 = 128, GAP = 2;
+const at = (r, deg) => [C + r * Math.cos(deg * Math.PI / 180), C + r * Math.sin(deg * Math.PI / 180)];
+function el(tag, attrs, text) {
+  const node = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+/** Draws a wheel into an SVG; returns a function that highlights one wedge (or -1). */
+function drawWheel(svg, catOrSpec) {
+  const w = typeof catOrSpec === "string" ? WHEELS[catOrSpec] : catOrSpec, n = w.items.length, sweep = 360 / Math.max(1, n);
+  svg.replaceChildren();
+  const wedges = [], labels = [];
+  w.items.forEach(([label], i) => {
+    const a0 = -90 - sweep / 2 + i * sweep + GAP / 2, a1 = a0 + sweep - GAP;
+    const [x0, y0] = at(R1, a0), [x1, y1] = at(R2, a0), [x2, y2] = at(R2, a1), [x3, y3] = at(R1, a1);
+    const wedge = el("path", { class: "wedge", d: `M${x0} ${y0} L${x1} ${y1} A${R2} ${R2} 0 0 1 ${x2} ${y2} L${x3} ${y3} A${R1} ${R1} 0 0 0 ${x0} ${y0} Z` });
+    const [tx, ty] = at((R1 + R2) / 2, (a0 + a1) / 2);
+    const text = el("text", { class: "wlabel", x: tx, y: ty + 4, "text-anchor": "middle" }, label);
+    svg.append(wedge, text);
+    wedges.push(wedge); labels.push(text);
+  });
+  svg.append(el("circle", { class: "whub", cx: C, cy: C, r: R1 - 6 }));
+  svg.append(el("text", { class: "whub-title", x: C, y: C + 1, "text-anchor": "middle" }, w.title));
+  svg.append(el("text", { class: "whub-key", x: C, y: C + 17, "text-anchor": "middle" }, n ? w.key : "Nothing here"));
+  return (index) => wedges.forEach((wedge, i) => { wedge.classList.toggle("on", i === index); labels[i].classList.toggle("on", i === index); });
+}
+
+/** Which wedge a point (in the SVG's own units) is over, or -1. */
+function wedgeAt(catOrSpec, x, y) {
+  const n = (typeof catOrSpec === "string" ? WHEELS[catOrSpec] : catOrSpec).items.length;
+  const sweep = 360 / Math.max(1, n), dx = x - C, dy = y - C, d = Math.hypot(dx, dy);
+  if (!n || d < R1 || d > R2 + 16) return -1;
+  const a = ((Math.atan2(dy, dx) * 180 / Math.PI + 90 + sweep / 2) % 360 + 360) % 360;
+  return Math.floor(a / sweep) % n;
+}
+
+// Showcase wheels: hover to try.
+document.querySelectorAll("svg[data-wheel]").forEach((svg) => {
+  const cat = svg.dataset.wheel, caption = document.querySelector(`[data-caption="${cat}"]`);
+  const highlight = drawWheel(svg, cat), initial = cat === "convert" ? 1 : 0;
+  highlight(initial);
+  caption.textContent = WHEELS[cat].items[initial][1];
+  svg.addEventListener("pointermove", (e) => {
+    const box = svg.getBoundingClientRect();
+    const i = wedgeAt(cat, (e.clientX - box.left) / box.width * 270, (e.clientY - box.top) / box.height * 270);
+    if (i >= 0) { highlight(i); caption.textContent = WHEELS[cat].items[i][1]; }
+  });
+});
+
+// Hero: drag any file, tap a key, drop on a wedge. Every result is a real file that can be converted again.
+(function () {
+  const stage = document.getElementById("stage"), pop = document.getElementById("pop");
+  const toast = document.getElementById("toast"), hint = document.getElementById("hint");
+  const taps = [...document.querySelectorAll(".tapkeys button[data-cat]")];
+  const KB = 1024, MB = 1024 * 1024;
+  const COLORS = { jpg: "#5b5bef", png: "#0e9488", webp: "#15803d", avif: "#9333ea", gif: "#e8730f", ico: "#64748b", pdf: "#dc3b2a", docx: "#2b5bd7", txt: "#6b7280", rtf: "#8b5cf6", html: "#e34c26" };
+  const IMAGES = ["jpg", "png", "webp", "avif", "gif", "ico"];
+  const RATIO = { jpg: .6, png: .75, webp: .1, avif: .06, gif: .45, ico: .6 }; // rough size of each format vs the photo
+  const extOf = (name) => name.split(".").pop().toLowerCase();
+  const baseOf = (name) => name.slice(0, name.lastIndexOf("."));
+  const kindOf = (ext) => IMAGES.includes(ext) ? "image" : ext === "pdf" ? "pdf" : ext === "docx" ? "word" : "text";
+  const sizeText = (b) => b >= MB ? `${(b / MB).toFixed(1).replace(/\.0$/, "")} MB` : `${Math.max(1, Math.round(b / KB))} KB`;
+
+  /** What each wheel offers for a file: [wedge label, what it does, (file) => new file {name, bytes} or a message]. */
+  function wheelFor(file, cat) {
+    const ext = extOf(file.name), kind = kindOf(ext), base = baseOf(file.name);
+    const out = (suffix, newExt, bytes) => ({ name: `${base}${suffix}.${newExt}`, bytes: Math.max(3 * KB, bytes) });
+    let items = [];
+    if (cat === "actions") {
+      items = [
+        ["Copy path", "Copy the file path", (f) => `Copied C:\\Users\\You\\Desktop\\${f.name}`],
+        ["Copy name", "Copy the file name", (f) => `Copied ${f.name}`],
+        ["Copy to…", "Copy to another folder", (f) => `Copied ${f.name} to Documents`],
+        ["Move to…", "Move to another folder", (f) => `Moved ${f.name} to Documents`],
+        ["Terminal", "Open a terminal here", () => "Opened Terminal in Desktop"],
+        ["Share", "Share nearby or by mail", () => "Opened the Windows share sheet"],
+      ];
+    } else if (kind === "image" && cat === "convert") {
+      items = ["png", "jpg", "webp", "avif", "gif"].filter((x) => x !== ext)
+        .map((x) => [x.toUpperCase(), `Convert to ${x.toUpperCase()}`, (f) => out("", x, f.bytes * RATIO[x] / RATIO[ext])])
+        .concat([["PDF", "Convert to PDF", (f) => out("", "pdf", f.bytes * .15)], ["ICO", "Make an icon", () => out("", "ico", 96 * KB)]])
+        .filter((item) => item[0].toLowerCase() !== ext)
+        .slice(0, 6);
+    } else if (kind === "image" && cat === "tools") {
+      items = [
+        ["Compress", "Compress to under 50 KB", (f) => out("-compressed", ext, Math.min(f.bytes * .6, 48 * KB))],
+        ["Portal", "Passport photo, 3.5 × 4.5 cm", () => out("-passport", "jpg", 46 * KB)],
+        ["Crop", "Crop to 4:5", (f) => out("-cropped", ext, f.bytes * .7)],
+        ["Edit", "Brighten and sharpen", (f) => out("-edited", ext, f.bytes * .97)],
+        ["Metadata", "Remove the location", (f) => out("-edited", ext, f.bytes * .99)],
+        ["Rotate", "Rotate right", (f) => out("-rotated", ext, f.bytes)],
+      ];
+    } else if (kind === "pdf" && cat === "convert") {
+      items = [
+        ["JPG", "Pages to JPG", () => out("-1", "jpg", 310 * KB)],
+        ["PNG", "Pages to PNG", () => out("-1", "png", 880 * KB)],
+        ["Word", "Convert to Word", (f) => out("", "docx", Math.max(40 * KB, f.bytes * .4))],
+        ["Text", "Extract the text", () => out("", "txt", 4 * KB)],
+      ];
+    } else if (kind === "pdf" && cat === "tools") {
+      items = [
+        ["Compress", "Compress the PDF", (f) => out("-compressed", "pdf", f.bytes * .55)],
+        ["Split", "Split into pages", (f) => out("-1", "pdf", f.bytes * .5)],
+        ["Rotate", "Rotate the pages", (f) => out("-rotated", "pdf", f.bytes)],
+      ];
+    } else if (kind === "word" && cat === "convert") {
+      items = [
+        ["PDF", "Convert to PDF", (f) => out("", "pdf", Math.max(60 * KB, f.bytes * 1.3))],
+        ["Text", "Save as plain text", () => out("", "txt", 4 * KB)],
+        ["RTF", "Save as RTF", (f) => out("", "rtf", f.bytes * 1.8)],
+        ["HTML", "Save as a web page", (f) => out("", "html", f.bytes * .6)],
+      ];
+    }
+    return { ...WHEELS[cat], items, empty: `Nothing to ${WHEELS[cat].title.toLowerCase()} for ${ext.toUpperCase()}` };
+  }
+
+  // ---- Files on the stage -------------------------------------------------
+  const files = []; // { name, bytes, el, original, x, y }
+  let home = { x: 0, y: 0 }, selected = null, drag = null, cat = null, spec = null, hover = -1, highlight = () => {}, toastTimer;
+
+  function iconHtml(ext) {
+    const picture = kindOf(ext) === "image" ? "pic" : "lines";
+    return `<div class="ficon" aria-hidden="true" style="--fmt:${COLORS[ext] || "var(--accent)"}"><span class="fold"></span><span class="${picture}"></span><span class="fmt">${ext.toUpperCase()}</span></div><div class="name"></div><div class="size"></div>`;
+  }
+
+  function addFile(name, bytes, original) {
+    // Never overwrite: "photo.pdf" exists, so the next one is "photo (1).pdf".
+    let unique = name;
+    for (let n = 1; files.some((f) => f.name === unique); n++) unique = `${baseOf(name)} (${n}).${extOf(name)}`;
+    const el = document.createElement("div");
+    el.className = "file" + (original ? "" : " result");
+    el.tabIndex = 0;
+    el.setAttribute("role", "button");
+    el.innerHTML = iconHtml(extOf(unique));
+    el.querySelector(".name").textContent = unique;
+    el.querySelector(".size").textContent = sizeText(bytes);
+    el.setAttribute("aria-label", `${unique}, ${sizeText(bytes)}. Drag it, or select it and use the buttons below.`);
+    const file = { name: unique, bytes, el, original, x: 0, y: 0 };
+    files.push(file);
+    stage.appendChild(el);
+    wire(file);
+    layout();
+    return file;
+  }
+
+  /** The original sits in the middle; copies fill spots beside it, nearest first, then a second row. */
+  function layout() {
+    const box = stage.getBoundingClientRect();
+    home = { x: box.width / 2 - 56, y: box.height / 2 - 56 };
+    const spots = [];
+    for (const row of [0, 118])
+      for (const k of [1, -1, 2, -2, 3, -3]) {
+        const x = home.x + k * 120, y = home.y + row;
+        if (x >= 0 && x <= box.width - 112 && y <= box.height - 112) spots.push({ x, y });
+      }
+    let copies = files.filter((f) => !f.original);
+    while (copies.length > spots.length) { // the oldest copy makes room
+      const oldest = copies.shift();
+      oldest.el.remove();
+      files.splice(files.indexOf(oldest), 1);
+      if (selected === oldest) select(files[0]);
+    }
+    files.forEach((f) => {
+      const spot = f.original ? home : spots[copies.indexOf(f)];
+      f.x = spot.x; f.y = spot.y;
+      if (!drag || drag.file !== f) { f.el.style.left = f.x + "px"; f.el.style.top = f.y + "px"; }
+    });
+  }
+
+  function select(file) {
+    selected = file;
+    files.forEach((f) => f.el.classList.toggle("selected", f === file));
+  }
+
+  function say(text) {
+    toast.textContent = text; toast.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("show"), 3200);
+  }
+
+  // ---- The wheel ----------------------------------------------------------
+  function openWheel(next, x, y) {
+    const alreadyOpen = cat !== null;
+    cat = next; hover = -1;
+    spec = wheelFor(drag ? drag.file : selected, cat);
+    highlight = drawWheel(pop, spec);
+    // Like the app: the wheel stays where it first opened; another key only swaps its contents.
+    if (!alreadyOpen) { pop.style.left = x + "px"; pop.style.top = y + "px"; }
+    pop.classList.add("open");
+    stage.classList.add("wheel-open");
+    taps.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.cat === cat)));
+    hint.innerHTML = spec.items.length ? `<b>${spec.title} wheel.</b> Drop the file on an option.` : `<b>${spec.empty}.</b> Try another key.`;
+  }
+  function closeWheel() {
+    cat = null; spec = null;
+    pop.classList.remove("open"); stage.classList.remove("wheel-open"); pop.style.pointerEvents = "none";
+    taps.forEach((b) => b.setAttribute("aria-pressed", "false"));
+  }
+  function hoverAt(clientX, clientY) {
+    if (!spec) return;
+    const box = pop.getBoundingClientRect();
+    hover = wedgeAt(spec, (clientX - box.left) / box.width * 270, (clientY - box.top) / box.height * 270);
+    highlight(hover);
+  }
+  function apply(file, index) {
+    const [, caption, run] = spec.items[index];
+    const result = run(file);
+    if (typeof result === "string") { say(result); hint.innerHTML = "<b>Done.</b> Drag any file and try another key."; return; }
+    const copy = addFile(result.name, result.bytes, false);
+    select(copy);
+    say(`${caption}: saved ${copy.name}, ${sizeText(copy.bytes)}.`);
+    hint.innerHTML = "<b>A new file appeared.</b> Drag it too, and convert it again.";
+  }
+
+  // ---- Dragging -----------------------------------------------------------
+  function wire(file) {
+    const el = file.el;
+    el.addEventListener("pointerdown", (e) => {
+      el.setPointerCapture(e.pointerId);
+      select(file);
+      drag = { file, id: e.pointerId, dx: e.clientX - file.x, dy: e.clientY - file.y, lastX: e.clientX, lastY: e.clientY, timer: null };
+      el.classList.add("dragging");
+      el.focus({ preventScroll: true });
+      if (e.pointerType !== "mouse")
+        drag.timer = setTimeout(() => { if (drag && !cat) { const b = stage.getBoundingClientRect(); openWheel("convert", drag.lastX - b.left, drag.lastY - b.top); } }, 700);
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (!drag || drag.file !== file || e.pointerId !== drag.id) return;
+      drag.lastX = e.clientX; drag.lastY = e.clientY;
+      const box = stage.getBoundingClientRect();
+      const x = Math.max(0, Math.min(box.width - 112, e.clientX - drag.dx)), y = Math.max(0, Math.min(box.height - 112, e.clientY - drag.dy));
+      el.style.left = x + "px"; el.style.top = y + "px";
+      if (!cat) hint.innerHTML = "<b>Now tap</b> <span class='kbd'>Shift</span> <span class='kbd'>Ctrl</span> or <span class='kbd'>Alt</span>";
+      hoverAt(e.clientX, e.clientY);
+    });
+    const end = (e) => {
+      if (!drag || drag.file !== file || e.pointerId !== drag.id) return;
+      clearTimeout(drag.timer);
+      el.classList.remove("dragging");
+      const target = cat && hover >= 0 ? hover : -1;
+      drag = null;
+      if (target >= 0) apply(file, target);
+      closeWheel();
+      layout(); // back to its spot
+    };
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(file); } });
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && cat) { closeWheel(); return; }
+    const next = e.key === "Shift" ? "convert" : e.key === "Control" ? "tools" : e.key === "Alt" ? "actions" : null;
+    if (!next || !drag) return;
+    e.preventDefault();
+    // Holding a key auto-repeats it; only the first press counts.
+    if (e.repeat || cat === next) return;
+    const box = stage.getBoundingClientRect();
+    openWheel(next, drag.lastX - box.left, drag.lastY - box.top);
+  });
+
+  // Tap keys: open a wheel for the selected file and pick with a click.
+  taps.forEach((b) => b.addEventListener("click", () => {
+    if (cat === b.dataset.cat) { closeWheel(); return; }
+    const box = stage.getBoundingClientRect(), f = selected;
+    const wasOpen = cat !== null;
+    if (wasOpen) cat = null; // reopen around the selected file
+    openWheel(b.dataset.cat, Math.min(Math.max(f.x + 56, 140), box.width - 140), Math.min(Math.max(f.y + 50, 140), box.height - 140));
+    pop.style.pointerEvents = "auto";
+  }));
+  pop.addEventListener("pointermove", (e) => { if (!drag) hoverAt(e.clientX, e.clientY); });
+  pop.addEventListener("click", (e) => {
+    if (drag || !spec) return;
+    hoverAt(e.clientX, e.clientY);
+    if (hover >= 0) { const target = hover; apply(selected, target); closeWheel(); }
+  });
+
+  document.getElementById("reset").addEventListener("click", () => {
+    closeWheel();
+    files.filter((f) => !f.original).forEach((f) => { f.el.remove(); files.splice(files.indexOf(f), 1); });
+    select(files[0]);
+    layout();
+    hint.innerHTML = "<b>Drag this file</b>, then tap <span class='kbd'>Shift</span> <span class='kbd'>Ctrl</span> or <span class='kbd'>Alt</span> while you hold it.";
+  });
+
+  // Replace the static first-paint file with the live one.
+  document.getElementById("file").remove();
+  select(addFile("passport_photo.jpg", 4.2 * MB, true));
+  window.addEventListener("resize", layout);
+})();
+
+
+</script>
+</body>
+</html>
